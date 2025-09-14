@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
-Poke MCP Server with Twitter Integration
-A Model Context Protocol server for Poke API and Twitter metrics integration
+Twitter MCP Server with Poke Integration
+A Model Context Protocol server for Twitter metrics that can send reports via Poke
 Based on the MCP server template: https://github.com/InteractionCo/mcp-server-template
 """
 
 import os
 import sys
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 
 # Add current directory to path for local imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from python_example import PokeAPI
-from twitter_metrics import send_daily_twitter_report, TwitterMetrics
+from twitter_metrics import TwitterMetrics, send_daily_twitter_report
 from fastmcp import FastMCP
 
 # Initialize the MCP server
-mcp = FastMCP("Poke API Server with Twitter Integration")
+mcp = FastMCP("Twitter MCP Server with Poke Integration")
 
 # Global Poke client instance
 poke_client: Optional[PokeAPI] = None
@@ -38,214 +38,24 @@ def get_poke_client() -> PokeAPI:
 @mcp.tool(description="Greet a user by name with a welcome message from the MCP server")
 def greet(name: str) -> str:
     """Greet a user by name"""
-    return f"Hello, {name}! Welcome to our Poke MCP server with Twitter integration!"
+    return f"Hello, {name}! Welcome to our Twitter MCP server!"
 
 @mcp.tool(description="Get information about the MCP server including name, version, environment, and available tools")
 def get_server_info() -> dict:
     """Get server information"""
     return {
-        "server_name": "Poke MCP Server with Twitter Integration",
+        "server_name": "Twitter MCP Server with Poke Integration",
         "version": "2.0.0",
         "environment": os.environ.get("ENVIRONMENT", "development"),
         "python_version": sys.version.split()[0],
         "available_tools": [
-            "send_poke_message",
-            "send_bulk_poke_messages", 
-            "send_poke_notification",
-            "test_poke_connection",
-            "get_poke_status",
+            "greet",
+            "get_server_info", 
             "get_twitter_metrics",
             "send_twitter_daily_report_tool",
             "setup_twitter_automation"
         ]
     }
-
-@mcp.tool(description="Send a message via the Poke API")
-def send_poke_message(message: str) -> Dict[str, Any]:
-    """
-    Send a message via the Poke API
-    
-    Args:
-        message: The message content to send
-        
-    Returns:
-        Dictionary containing the response from Poke API
-    """
-    try:
-        client = get_poke_client()
-        response = client.send_message(message)
-        
-        return {
-            "success": True,
-            "message": f"Message sent successfully: '{message}'",
-            "poke_response": response,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": f"Failed to send message: '{message}'",
-            "timestamp": datetime.now().isoformat()
-        }
-
-@mcp.tool(description="Send multiple messages via the Poke API")
-def send_bulk_poke_messages(messages: List[str]) -> Dict[str, Any]:
-    """
-    Send multiple messages via the Poke API
-    
-    Args:
-        messages: List of message strings to send
-        
-    Returns:
-        Dictionary containing results for all messages
-    """
-    try:
-        client = get_poke_client()
-        responses = client.send_bulk_messages(messages)
-        
-        results = []
-        success_count = 0
-        
-        for i, (message, response) in enumerate(zip(messages, responses)):
-            if not response.get('error'):
-                success_count += 1
-            
-            results.append({
-                "message": message,
-                "response": response,
-                "success": not response.get('error', False)
-            })
-        
-        return {
-            "success": True,
-            "total_messages": len(messages),
-            "successful_sends": success_count,
-            "failed_sends": len(messages) - success_count,
-            "results": results,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": f"Failed to send bulk messages",
-            "timestamp": datetime.now().isoformat()
-        }
-
-@mcp.tool(description="Test the connection to the Poke API")
-def test_poke_connection() -> Dict[str, Any]:
-    """
-    Test the connection to the Poke API
-    
-    Returns:
-        Dictionary containing connection status
-    """
-    try:
-        client = get_poke_client()
-        is_connected = client.test_connection()
-        
-        return {
-            "success": is_connected,
-            "message": "Connection successful" if is_connected else "Connection failed",
-            "api_configured": True,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": "Failed to test connection",
-            "api_configured": False,
-            "timestamp": datetime.now().isoformat()
-        }
-
-@mcp.tool(description="Get the current status of the Poke API integration")
-def get_poke_status() -> Dict[str, Any]:
-    """
-    Get the current status of the Poke API integration
-    
-    Returns:
-        Dictionary containing status information
-    """
-    try:
-        api_key = os.getenv('POKE_API_KEY')
-        has_api_key = bool(api_key)
-        
-        status = {
-            "api_key_configured": has_api_key,
-            "client_initialized": poke_client is not None,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        if has_api_key:
-            try:
-                client = get_poke_client()
-                connection_ok = client.test_connection()
-                status.update({
-                    "connection_status": "connected" if connection_ok else "disconnected",
-                    "api_responsive": connection_ok
-                })
-            except Exception as e:
-                status.update({
-                    "connection_status": "error",
-                    "api_responsive": False,
-                    "connection_error": str(e)
-                })
-        else:
-            status.update({
-                "connection_status": "not_configured",
-                "api_responsive": False,
-                "message": "POKE_API_KEY environment variable not set"
-            })
-        
-        return status
-        
-    except Exception as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
-
-@mcp.tool(description="Send a formatted notification message via Poke")
-def send_poke_notification(title: str, message: str, urgent: bool = False) -> Dict[str, Any]:
-    """
-    Send a formatted notification message via Poke
-    
-    Args:
-        title: The notification title
-        message: The notification content
-        urgent: Whether this is an urgent notification (adds emoji)
-        
-    Returns:
-        Dictionary containing the response from Poke API
-    """
-    try:
-        # Format the notification message
-        urgency_prefix = "🚨 URGENT: " if urgent else "📢 "
-        formatted_message = f"{urgency_prefix}{title}\n\n{message}\n\n⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        
-        client = get_poke_client()
-        response = client.send_message(formatted_message)
-        
-        return {
-            "success": True,
-            "message": f"Notification sent: '{title}'",
-            "formatted_message": formatted_message,
-            "poke_response": response,
-            "urgent": urgent,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": f"Failed to send notification: '{title}'",
-            "timestamp": datetime.now().isoformat()
-        }
 
 @mcp.tool(description="Get Twitter metrics for a specific user")
 def get_twitter_metrics(username: str, days: int = 1) -> Dict[str, Any]:
@@ -302,7 +112,7 @@ def send_twitter_daily_report_tool(username: str) -> Dict[str, Any]:
         
         return {
             "success": result.get('success', False),
-            "message": "Daily Twitter report sent successfully" if result.get('success') else "Failed to send report",
+            "message": "Daily Twitter report sent via Poke successfully" if result.get('success') else "Failed to send report",
             "data": result,
             "timestamp": datetime.now().isoformat()
         }
@@ -311,7 +121,7 @@ def send_twitter_daily_report_tool(username: str) -> Dict[str, Any]:
         return {
             "success": False,
             "error": str(e),
-            "message": f"Failed to send daily report for @{username}",
+            "message": f"Failed to send daily report for @{username} via Poke",
             "timestamp": datetime.now().isoformat()
         }
 
@@ -361,9 +171,9 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     host = "0.0.0.0"
     
-    print("🚀 Starting Poke MCP Server with Twitter Integration")
-    print("🔧 Poke integration tools loaded")
+    print("🚀 Starting Twitter MCP Server with Poke Integration")
     print("🐦 Twitter metrics tools loaded")
+    print("📤 Poke messaging integration loaded")
     print("📡 Server will be available at /mcp endpoint")
     
     # Check for API keys
