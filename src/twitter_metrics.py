@@ -51,7 +51,7 @@ class TwitterMetrics:
             print(f"Error getting user ID: {e}")
             return None
     
-    def get_recent_tweets(self, user_id: str, days: int = 1, max_results: int = 3) -> List[Dict]:
+    def get_recent_tweets(self, user_id: str, days: int = 1, max_results: int = 5) -> List[Dict]:
         """
         Get recent tweets with public metrics
         ⚠️  FREE TIER WARNING (2025): Check current X API limits!
@@ -66,7 +66,7 @@ class TwitterMetrics:
             self._log_api_call(f"get_users_tweets(user_id={user_id}, max={max_results})")
             tweets = self.client.get_users_tweets(
                 id=user_id,
-                max_results=min(max_results, 3),  # FREE TIER: Drastically reduced to conserve quota
+                max_results=min(max_results, 5),  # FREE TIER: Minimum allowed by X API is 5
                 tweet_fields=['public_metrics', 'created_at'],  # Removed context_annotations to reduce data
                 start_time=start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
                 end_time=end_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
@@ -106,8 +106,8 @@ class TwitterMetrics:
         if not user_id:
             return {"error": f"User '{username}' not found or API limit reached"}
         
-        # REDUCED: Only get 3 tweets max to conserve API quota
-        tweets = self.get_recent_tweets(user_id, days=1, max_results=3)
+        # REDUCED: Only get 5 tweets (minimum allowed) to conserve API quota
+        tweets = self.get_recent_tweets(user_id, days=1, max_results=5)
         
         if not tweets:
             return {
