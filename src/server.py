@@ -18,6 +18,10 @@ from twitter_metrics import TwitterCounter, PostingReminder, get_usage_info
 from fastmcp import FastMCP
 import logging
 
+# Set up detailed logging for debugging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 # Initialize the MCP server
 mcp = FastMCP("Twitter MCP Server with Poke Integration")
 
@@ -47,17 +51,39 @@ def greet(name: str) -> str:
 @mcp.tool(description="Test connectivity and server status - returns server health information")
 def test_connection() -> dict:
     """Test MCP server connectivity"""
+    logger.info("test_connection tool called successfully")
     return {
         "status": "ok",
         "server": "Twitter MCP Server with Poke Integration",
         "timestamp": datetime.now().isoformat(),
         "health": "healthy",
         "endpoints": {
-            "tweet_count": "available",
+            "tweet_count": "available", 
             "posting_reminders": "available",
             "poke_integration": "available"
         },
-        "message": "MCP server is responding correctly"
+        "message": "MCP server is responding correctly",
+        "debug": {
+            "request_received": True,
+            "tool_executed": True,
+            "protocol": "MCP over HTTP"
+        }
+    }
+
+@mcp.tool(description="Debug tool to test basic MCP protocol functionality")
+def debug_request() -> dict:
+    """Debug MCP request handling"""
+    logger.info("debug_request tool called - testing MCP protocol")
+    return {
+        "debug_info": {
+            "mcp_protocol": "working",
+            "tool_execution": "successful", 
+            "server_timestamp": datetime.now().isoformat(),
+            "fastmcp_version": "2.12.3",
+            "transport": "http",
+            "stateless": True
+        },
+        "message": "MCP protocol debug successful"
     }
 
 @mcp.tool(description="Get information about the MCP server including name, version, environment, and available tools")
@@ -70,7 +96,8 @@ def get_server_info() -> dict:
         "python_version": sys.version.split()[0],
         "available_tools": [
             "greet",
-            "test_connection",
+            "test_connection", 
+            "debug_request",
             "get_server_info", 
             "get_tweet_count_24h",
             "get_tweet_count_report",
@@ -229,6 +256,13 @@ if __name__ == "__main__":
         print(f"✅ Twitter API token configured: {twitter_token[:10]}...")
     
     print(f"Starting FastMCP server on {host}:{port}")
+    print(f"🔍 Debug mode enabled - detailed logging active")
+    print(f"📡 Server will be accessible at:")
+    print(f"   Local: http://localhost:{port}/mcp")
+    print(f"   Render: https://poke-x-twitter-mcp-server.onrender.com/mcp")
+    print(f"🛠️  Available tools: greet, test_connection, debug_request")
+    
+    logger.info(f"Initializing FastMCP server with host={host}, port={port}")
     
     try:
         
