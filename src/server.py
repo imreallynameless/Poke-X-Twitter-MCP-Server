@@ -229,16 +229,18 @@ if __name__ == "__main__":
     # FastMCP HTTP transport - using stateless HTTP for Render deployment
     try:
         print(f"🔧 Starting FastMCP HTTP server...")
-        print(f"   Transport: HTTP (stateless)")
+        print(f"   Transport: HTTP")
         print(f"   Host: {host}")
         print(f"   Port: {port}")
         print(f"   Endpoint: /mcp")
+        print(f"   Version: 2.10.0 (stable, no stateless_http)")
         
         mcp.run(
             transport="http",
-            host=host,
-            port=port,
-            stateless_http=True
+            transport_kwargs={
+                "host": host,
+                "port": port
+            }
         )
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
