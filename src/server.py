@@ -232,20 +232,19 @@ if __name__ == "__main__":
     
     # FastMCP Streamable HTTP transport - following InteractionCo template
     try:
-        print(f"🔧 Starting FastMCP Streamable HTTP server...")
-        print(f"   Transport: Streamable HTTP (following template)")
+        print(f"🔧 Starting FastMCP HTTP server...")
+        print(f"   Transport: HTTP (basic, most compatible)")
         print(f"   Host: {host}")
         print(f"   Port: {port}")
         print(f"   Endpoint: /mcp")
         print(f"   Version: 2.12.3 (following template)")
         
-        # Use run_http_async with streamable-http transport for better MCP compatibility
-        # This method provides more control and should fix HTTP 400 errors
-        mcp.run_http_async(
-            transport="streamable-http",
-            host=host,
+        # Use standard HTTP transport with explicit configuration
+        # This is the most basic and reliable MCP server setup
+        mcp.run(
+            transport="http",
             port=port,
-            stateless_http=True
+            host=host
         )
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
