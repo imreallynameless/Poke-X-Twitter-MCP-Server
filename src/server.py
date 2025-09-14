@@ -40,6 +40,22 @@ def greet(name: str) -> str:
     """Greet a user by name"""
     return f"Hello, {name}! Welcome to our Twitter MCP server!"
 
+@mcp.tool(description="Test connectivity and server status - returns server health information")
+def test_connection() -> dict:
+    """Test MCP server connectivity"""
+    return {
+        "status": "ok",
+        "server": "Twitter MCP Server with Poke Integration",
+        "timestamp": datetime.now().isoformat(),
+        "health": "healthy",
+        "endpoints": {
+            "tweet_count": "available",
+            "posting_reminders": "available",
+            "poke_integration": "available"
+        },
+        "message": "MCP server is responding correctly"
+    }
+
 @mcp.tool(description="Get information about the MCP server including name, version, environment, and available tools")
 def get_server_info() -> dict:
     """Get server information"""
@@ -50,6 +66,7 @@ def get_server_info() -> dict:
         "python_version": sys.version.split()[0],
         "available_tools": [
             "greet",
+            "test_connection",
             "get_server_info", 
             "get_tweet_count_24h",
             "get_tweet_count_report",
@@ -198,8 +215,14 @@ if __name__ == "__main__":
     
     print(f"🌐 Starting FastMCP server on {host}:{port}")
     
-    # FastMCP automatically supports HTTP transport for web deployment
+    # FastMCP HTTP transport - using stateless HTTP for Render deployment
     try:
+        print(f"🔧 Starting FastMCP HTTP server...")
+        print(f"   Transport: HTTP (stateless)")
+        print(f"   Host: {host}")
+        print(f"   Port: {port}")
+        print(f"   Endpoint: /mcp")
+        
         mcp.run(
             transport="http",
             host=host,
@@ -208,4 +231,6 @@ if __name__ == "__main__":
         )
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
+        print(f"   Error type: {type(e).__name__}")
+        print(f"   FastMCP version: Check compatibility with deployment platform")
         sys.exit(1)
