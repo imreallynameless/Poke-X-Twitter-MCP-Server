@@ -191,7 +191,7 @@ def check_posting_reminders() -> dict:
         return {"error": f"Failed to check reminders: {str(e)}"}
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8000))  # Use 8000 as default instead of environment
     host = "0.0.0.0"
     
     print(f"🔧 Environment PORT: {os.environ.get('PORT', 'not set, using 8000')}")
