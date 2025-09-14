@@ -226,20 +226,18 @@ if __name__ == "__main__":
     
     print(f"🌐 Starting FastMCP server on {host}:{port}")
     
-    # FastMCP HTTP transport - using stateless HTTP for Render deployment
+    # FastMCP Streamable HTTP transport - following InteractionCo template
     try:
-        print(f"🔧 Starting FastMCP HTTP server...")
-        print(f"   Transport: HTTP")
+        print(f"🔧 Starting FastMCP Streamable HTTP server...")
+        print(f"   Transport: Streamable HTTP (following template)")
         print(f"   Host: {host}")
         print(f"   Port: {port}")
         print(f"   Endpoint: /mcp")
-        print(f"   Version: 2.10.0 (stable, no stateless_http)")
+        print(f"   Version: 2.12.3 (following template)")
         
-        mcp.run(
-            transport="http",
-            host=host,
-            port=port
-        )
+        # Use streamable HTTP transport as per InteractionCo template
+        # Let FastMCP handle host/port configuration automatically
+        mcp.run(transport="streamable-http")
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
         print(f"   Error type: {type(e).__name__}")
