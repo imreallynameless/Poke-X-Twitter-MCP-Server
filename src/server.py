@@ -239,12 +239,13 @@ if __name__ == "__main__":
         print(f"   Endpoint: /mcp")
         print(f"   Version: 2.12.3 (following template)")
         
-        # Use streamable HTTP transport with explicit port for Render
-        # Render needs the server to bind to the PORT environment variable
-        mcp.run(
+        # Use run_http_async with streamable-http transport for better MCP compatibility
+        # This method provides more control and should fix HTTP 400 errors
+        mcp.run_http_async(
             transport="streamable-http",
+            host=host,
             port=port,
-            host=host
+            stateless_http=True
         )
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
