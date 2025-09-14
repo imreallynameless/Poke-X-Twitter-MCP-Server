@@ -194,6 +194,10 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     host = "0.0.0.0"
     
+    print(f"🔧 Environment PORT: {os.environ.get('PORT', 'not set, using 8000')}")
+    print(f"🔧 Resolved port: {port}")
+    print(f"🔧 Host: {host}")
+    
     print("🚀 Starting Twitter Tweet Counter MCP Server with Poke Integration")
     print("📊 Tweet counting tools loaded (using /2/tweets/counts/recent)")
     print("⏰ Posting reminder system loaded")
@@ -235,9 +239,13 @@ if __name__ == "__main__":
         print(f"   Endpoint: /mcp")
         print(f"   Version: 2.12.3 (following template)")
         
-        # Use streamable HTTP transport as per InteractionCo template
-        # Let FastMCP handle host/port configuration automatically
-        mcp.run(transport="streamable-http")
+        # Use streamable HTTP transport with explicit port for Render
+        # Render needs the server to bind to the PORT environment variable
+        mcp.run(
+            transport="streamable-http",
+            port=port,
+            host=host
+        )
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
         print(f"   Error type: {type(e).__name__}")
