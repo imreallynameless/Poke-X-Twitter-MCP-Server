@@ -62,26 +62,60 @@ def get_server_info() -> dict:
 def get_tweet_count_24h(username: str) -> dict:
     """Get tweet count for last 24 hours"""
     try:
+        # Clean and validate username
+        if not username or not isinstance(username, str):
+            return {"error": "Username is required and must be a string"}
+        
+        clean_username = username.strip().lstrip('@').lower()
+        if not clean_username:
+            return {"error": "Invalid username provided"}
+        
         bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
         if not bearer_token:
             return {"error": "TWITTER_BEARER_TOKEN not configured"}
         
         counter = TwitterCounter(bearer_token)
-        return counter.get_tweet_count_24h(username)
+        result = counter.get_tweet_count_24h(clean_username)
+        
+        # Add debug info for troubleshooting
+        result["debug_info"] = {
+            "original_username": username,
+            "cleaned_username": clean_username,
+            "server_timestamp": datetime.now().isoformat()
+        }
+        
+        return result
         
     except Exception as e:
-        return {"error": f"Failed to get tweet count: {str(e)}"}
+        error_msg = str(e)
+        return {
+            "error": f"Failed to get tweet count: {error_msg}",
+            "debug_info": {
+                "original_username": username if 'username' in locals() else "N/A",
+                "cleaned_username": clean_username if 'clean_username' in locals() else "N/A",
+                "error_type": type(e).__name__,
+                "server_timestamp": datetime.now().isoformat()
+            }
+        }
 
 @mcp.tool(description="Get formatted tweet count report for the last 24 hours")
 def get_tweet_count_report(username: str) -> str:
     """Get formatted tweet count report"""
     try:
+        # Clean and validate username
+        if not username or not isinstance(username, str):
+            return "❌ Error: Username is required and must be a string"
+        
+        clean_username = username.strip().lstrip('@').lower()
+        if not clean_username:
+            return "❌ Error: Invalid username provided"
+        
         bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
         if not bearer_token:
             return "❌ Error: TWITTER_BEARER_TOKEN not configured"
         
         counter = TwitterCounter(bearer_token)
-        return counter.format_tweet_count_report(username)
+        return counter.format_tweet_count_report(clean_username)
         
     except Exception as e:
         return f"❌ Error generating tweet count report: {str(e)}"
@@ -97,12 +131,20 @@ def setup_posting_reminder(username: str, reminder_time: str, min_posts: int = 1
         custom_message: Optional custom reminder message
     """
     try:
+        # Clean and validate username
+        if not username or not isinstance(username, str):
+            return {"error": "Username is required and must be a string"}
+        
+        clean_username = username.strip().lstrip('@').lower()
+        if not clean_username:
+            return {"error": "Invalid username provided"}
+        
         poke_client = get_poke_client()
         if not poke_client:
             return {"error": "POKE_API_KEY not configured"}
             
         reminder = PostingReminder(poke_client)
-        return reminder.setup_daily_reminder(username, reminder_time, min_posts, custom_message)
+        return reminder.setup_daily_reminder(clean_username, reminder_time, min_posts, custom_message)
         
     except Exception as e:
         return {"error": f"Failed to setup posting reminder: {str(e)}"}
@@ -136,6 +178,7 @@ if __name__ == "__main__":
     print("⏰ Posting reminder system loaded")
     print("📤 Poke messaging integration loaded")
     print("📡 Server will be available at /mcp endpoint")
+    print("🔧 Input validation and error handling enabled")
     
     # Check for API keys
     poke_api_key = os.getenv('POKE_API_KEY')
