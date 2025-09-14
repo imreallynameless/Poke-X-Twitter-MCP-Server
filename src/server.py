@@ -218,8 +218,12 @@ def check_posting_reminders() -> dict:
         return {"error": f"Failed to check reminders: {str(e)}"}
 
 if __name__ == "__main__":
+    # Render provides PORT environment variable
     port = int(os.environ.get("PORT", 8000))  # Use 8000 as default instead of environment
     host = "0.0.0.0"
+    
+    # Set PORT for FastMCP to use (it may check this internally)
+    os.environ["PORT"] = str(port)
     
     print(f"🔧 Environment PORT: {os.environ.get('PORT', 'not set, using 8000')}")
     print(f"🔧 Resolved port: {port}")
@@ -266,13 +270,9 @@ if __name__ == "__main__":
     
     try:
         
-        # Use the exact pattern from working MCP server example
-        mcp.run(
-            transport="http",
-            host=host,
-            port=port,
-            stateless_http=True
-        )
+        # Use FastMCP's default configuration (auto-detects best transport)
+        # This matches the working InteractionCo template pattern
+        mcp.run()
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
         print(f"   Error type: {type(e).__name__}")
