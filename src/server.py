@@ -237,10 +237,8 @@ if __name__ == "__main__":
         
         mcp.run(
             transport="http",
-            transport_kwargs={
-                "host": host,
-                "port": port
-            }
+            host=host,
+            port=port
         )
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
