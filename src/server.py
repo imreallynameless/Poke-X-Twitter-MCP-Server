@@ -270,9 +270,10 @@ if __name__ == "__main__":
     
     try:
         
-        # Use FastMCP's default configuration (auto-detects best transport)
-        # This matches the working InteractionCo template pattern
-        mcp.run()
+        # Force HTTP transport for web deployment (STDIO is for command-line)
+        # Render needs HTTP transport, not STDIO
+        logger.info("Forcing HTTP transport for web deployment")
+        mcp.run(transport="http", host=host, port=port)
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
         print(f"   Error type: {type(e).__name__}")
