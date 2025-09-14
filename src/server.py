@@ -228,23 +228,16 @@ if __name__ == "__main__":
     else:
         print(f"✅ Twitter API token configured: {twitter_token[:10]}...")
     
-    print(f"🌐 Starting FastMCP server on {host}:{port}")
+    print(f"Starting FastMCP server on {host}:{port}")
     
-    # FastMCP Streamable HTTP transport - following InteractionCo template
     try:
-        print(f"🔧 Starting FastMCP HTTP server...")
-        print(f"   Transport: HTTP (basic, most compatible)")
-        print(f"   Host: {host}")
-        print(f"   Port: {port}")
-        print(f"   Endpoint: /mcp")
-        print(f"   Version: 2.12.3 (following template)")
         
-        # Use standard HTTP transport with explicit configuration
-        # This is the most basic and reliable MCP server setup
+        # Use the exact pattern from working MCP server example
         mcp.run(
             transport="http",
+            host=host,
             port=port,
-            host=host
+            stateless_http=True
         )
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
