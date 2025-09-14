@@ -32,31 +32,42 @@ class TwitterMetrics:
         """Initialize Twitter API client"""
         self.bearer_token = bearer_token
         self.client = tweepy.Client(bearer_token=bearer_token)
+        self.api_calls_made = 0  # Track API usage
+        
+    def _log_api_call(self, endpoint: str):
+        """Log API call for tracking usage"""
+        self.api_calls_made += 1
+        print(f"📊 API Call #{self.api_calls_made}: {endpoint}")
+        if self.api_calls_made >= 90:  # Warn at 90% of 100 limit
+            print(f"⚠️  WARNING: {self.api_calls_made}/100 monthly API calls used!")
         
     def get_user_id(self, username: str) -> Optional[str]:
-        """Get user ID from username"""
+        """Get user ID from username - COUNTS TOWARD 100/month limit!"""
         try:
+            self._log_api_call(f"get_user('{username}')")
             user = self.client.get_user(username=username)
             return user.data.id if user.data else None
         except Exception as e:
             print(f"Error getting user ID: {e}")
             return None
     
-    def get_recent_tweets(self, user_id: str, days: int = 1, max_results: int = 10) -> List[Dict]:
+    def get_recent_tweets(self, user_id: str, days: int = 1, max_results: int = 3) -> List[Dict]:
         """
         Get recent tweets with public metrics
-        Limited to respect rate limits: 100 calls/month, 1 every 15 minutes
+        ⚠️  FREE TIER WARNING (2025): Check current X API limits!
+        Conserving API quota by limiting results
         """
         try:
             # Calculate date range (last N days)
             end_time = datetime.now()
             start_time = end_time - timedelta(days=days)
             
-            # Get tweets with public metrics (doesn't require OAuth user context)
+            # Get tweets with public metrics - COUNTS TOWARD 100/month limit!
+            self._log_api_call(f"get_users_tweets(user_id={user_id}, max={max_results})")
             tweets = self.client.get_users_tweets(
                 id=user_id,
-                max_results=min(max_results, 10),  # Limit to reduce API calls
-                tweet_fields=['public_metrics', 'created_at', 'context_annotations'],
+                max_results=min(max_results, 3),  # FREE TIER: Drastically reduced to conserve quota
+                tweet_fields=['public_metrics', 'created_at'],  # Removed context_annotations to reduce data
                 start_time=start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
                 end_time=end_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             )
@@ -86,13 +97,17 @@ class TwitterMetrics:
             return []
     
     def get_daily_summary(self, username: str) -> Dict[str, Any]:
-        """Get daily metrics summary for a user"""
+        """Get daily metrics summary for a user - OPTIMIZED for Free tier (100 calls/month)"""
+        
+        # WARNING: Free tier only allows 100 API calls per month!
+        # We must minimize calls - try to cache user_id if possible
+        
         user_id = self.get_user_id(username)
         if not user_id:
-            return {"error": "User not found"}
+            return {"error": f"User '{username}' not found or API limit reached"}
         
-        # Get yesterday's tweets to avoid timezone issues
-        tweets = self.get_recent_tweets(user_id, days=1, max_results=5)
+        # REDUCED: Only get 3 tweets max to conserve API quota
+        tweets = self.get_recent_tweets(user_id, days=1, max_results=3)
         
         if not tweets:
             return {
