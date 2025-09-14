@@ -16,9 +16,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from python_example import PokeAPI
 from twitter_metrics import TwitterCounter, PostingReminder, get_usage_info
 from fastmcp import FastMCP
+import logging
 
 # Initialize the MCP server
 mcp = FastMCP("Twitter MCP Server with Poke Integration")
+
+# Note: FastMCP handles HTTP transport internally
+# The 406 error suggests the client is making GET requests when MCP expects POST
 
 # Global Poke client instance
 poke_client: Optional[PokeAPI] = None
@@ -196,6 +200,13 @@ if __name__ == "__main__":
     print("📤 Poke messaging integration loaded")
     print("📡 Server will be available at /mcp endpoint")
     print("🔧 Input validation and error handling enabled")
+    print("")
+    print("🔍 DEBUGGING HTTP 406 ERRORS:")
+    print("   • MCP protocol requires POST requests to /mcp")
+    print("   • Client making GET requests will receive 406 errors")
+    print("   • Ensure MCP client is configured for HTTP transport")
+    print("   • Server URL should be: https://your-domain.com/mcp")
+    print("   • Required headers: Content-Type: application/json")
     
     # Check for API keys
     poke_api_key = os.getenv('POKE_API_KEY')
