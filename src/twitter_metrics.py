@@ -57,8 +57,8 @@ class TwitterMetrics:
                 id=user_id,
                 max_results=min(max_results, 10),  # Limit to reduce API calls
                 tweet_fields=['public_metrics', 'created_at', 'context_annotations'],
-                start_time=start_time.isoformat(),
-                end_time=end_time.isoformat()
+                start_time=start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                end_time=end_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             )
             
             if not tweets.data:
