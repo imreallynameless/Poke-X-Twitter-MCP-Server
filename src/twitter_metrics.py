@@ -33,6 +33,7 @@ class TwitterMetrics:
         self.bearer_token = bearer_token
         self.client = tweepy.Client(bearer_token=bearer_token)
         self.api_calls_made = 0  # Track API usage
+        self.user_id_cache = {}  # Cache user IDs to save API calls
         
     def _log_api_call(self, endpoint: str):
         """Log API call for tracking usage"""
@@ -42,11 +43,23 @@ class TwitterMetrics:
             print(f"⚠️  WARNING: {self.api_calls_made}/100 monthly API calls used!")
         
     def get_user_id(self, username: str) -> Optional[str]:
-        """Get user ID from username - COUNTS TOWARD 100/month limit!"""
+        """Get user ID from username - CACHES to save API calls!"""
+        # Check cache first to save precious API calls
+        if username in self.user_id_cache:
+            print(f"💾 Using cached user ID for '{username}': {self.user_id_cache[username]}")
+            return self.user_id_cache[username]
+            
         try:
             self._log_api_call(f"get_user('{username}')")
             user = self.client.get_user(username=username)
-            return user.data.id if user.data else None
+            user_id = user.data.id if user.data else None
+            
+            # Cache the result for future use
+            if user_id:
+                self.user_id_cache[username] = user_id
+                print(f"💾 Cached user ID for '{username}': {user_id}")
+                
+            return user_id
         except Exception as e:
             print(f"Error getting user ID: {e}")
             return None
@@ -139,6 +152,44 @@ class TwitterMetrics:
             "top_tweet": max(tweets, key=lambda t: sum(t['metrics'].values())) if tweets else None,
             "tweets": tweets
         }
+
+def get_usage_recommendations() -> str:
+    """Get usage recommendations for 2025 X API Free Tier"""
+    return """
+📊 2025 X API FREE TIER USAGE RECOMMENDATIONS:
+
+⚠️  DAILY REPORTS LIMITATIONS:
+• 100 API calls per month total
+• Each daily report = 2 API calls (user lookup + tweets)
+• Maximum 50 reports per month
+• TRUE daily (30 reports) = 60 API calls, leaving only 40 for other usage
+
+🎯 RECOMMENDED USAGE PATTERNS:
+
+1️⃣ WEEKLY REPORTS (Sustainable):
+   • 4 reports per month = 8 API calls
+   • Plenty of buffer for other usage
+   • Run every Sunday for weekly summary
+
+2️⃣ BI-WEEKLY REPORTS (Moderate):
+   • 2 reports per month = 4 API calls  
+   • Very conservative usage
+   • Good for occasional monitoring
+
+3️⃣ MONTHLY REPORTS (Ultra-conservative):
+   • 1 report per month = 2 API calls
+   • Maximum API quota preservation
+
+❌ NOT RECOMMENDED:
+   • True daily automation (30+ reports/month)
+   • Multiple users without caching
+   • Testing without API call tracking
+
+💡 OPTIMIZATION TIPS:
+   • User IDs are cached after first lookup
+   • Subsequent reports for same user = 1 API call only
+   • Use sparingly and strategically
+"""
 
 def format_metrics_message(summary: Dict[str, Any]) -> str:
     """Format metrics summary into a readable message"""
