@@ -14,7 +14,7 @@ from typing import Optional, Dict, Any
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from python_example import PokeAPI
-from twitter_metrics import TwitterMetrics, send_daily_twitter_report
+from twitter_metrics import TwitterCounter, PostingReminder, get_usage_info
 from fastmcp import FastMCP
 
 # Initialize the MCP server
@@ -51,128 +51,89 @@ def get_server_info() -> dict:
         "available_tools": [
             "greet",
             "get_server_info", 
-            "get_twitter_metrics",
-            "send_twitter_daily_report_tool",
-            "setup_twitter_automation"
+            "get_tweet_count_24h",
+            "get_tweet_count_report",
+            "setup_posting_reminder",
+            "check_posting_reminders"
         ]
     }
 
-@mcp.tool(description="Get Twitter metrics for a specific user")
-def get_twitter_metrics(username: str, days: int = 1) -> Dict[str, Any]:
-    """
-    Get Twitter metrics for a specific user
-    
-    Args:
-        username: Twitter username (without @)
-        days: Number of days to look back (default: 1)
-        
-    Returns:
-        Dictionary containing Twitter metrics summary
-    """
+@mcp.tool(description="Get count of tweets posted in the last 24 hours for a specific user")
+def get_tweet_count_24h(username: str) -> dict:
+    """Get tweet count for last 24 hours"""
     try:
-        twitter_token = os.getenv('TWITTER_BEARER_TOKEN')
-        if not twitter_token:
-            return {
-                "success": False,
-                "error": "TWITTER_BEARER_TOKEN environment variable not set",
-                "message": "Please configure Twitter API credentials"
-            }
+        bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
+        if not bearer_token:
+            return {"error": "TWITTER_BEARER_TOKEN not configured"}
         
-        twitter = TwitterMetrics(twitter_token)
-        summary = twitter.get_daily_summary(username)
-        
-        return {
-            "success": True,
-            "data": summary,
-            "timestamp": datetime.now().isoformat()
-        }
+        counter = TwitterCounter(bearer_token)
+        return counter.get_tweet_count_24h(username)
         
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": f"Failed to fetch Twitter metrics for @{username}",
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"error": f"Failed to get tweet count: {str(e)}"}
 
-@mcp.tool(description="Send daily Twitter metrics report via Poke")
-def send_twitter_daily_report_tool(username: str) -> Dict[str, Any]:
-    """
-    Send daily Twitter metrics report via Poke
-    
-    Args:
-        username: Twitter username (without @)
-        
-    Returns:
-        Dictionary containing report status and Poke response
-    """
+@mcp.tool(description="Get formatted tweet count report for the last 24 hours")
+def get_tweet_count_report(username: str) -> str:
+    """Get formatted tweet count report"""
     try:
-        client = get_poke_client()
-        result = send_daily_twitter_report(username, client)
+        bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
+        if not bearer_token:
+            return "❌ Error: TWITTER_BEARER_TOKEN not configured"
         
-        return {
-            "success": result.get('success', False),
-            "message": "Daily Twitter report sent via Poke successfully" if result.get('success') else "Failed to send report",
-            "data": result,
-            "timestamp": datetime.now().isoformat()
-        }
+        counter = TwitterCounter(bearer_token)
+        return counter.format_tweet_count_report(username)
         
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": f"Failed to send daily report for @{username} via Poke",
-            "timestamp": datetime.now().isoformat()
-        }
+        return f"❌ Error generating tweet count report: {str(e)}"
 
-@mcp.tool(description="Set up automated daily Twitter metrics reports")
-def setup_twitter_automation(username: str, time_hour: int = 21) -> Dict[str, Any]:
-    """
-    Set up automated daily Twitter metrics reports
+@mcp.tool(description="Set up daily posting reminder - sends alert via Poke if tweet count is below threshold at specified time")
+def setup_posting_reminder(username: str, reminder_time: str, min_posts: int = 1, custom_message: str = None) -> dict:
+    """Set up daily posting reminder
     
     Args:
-        username: Twitter username (without @)
-        time_hour: Hour to send report (24-hour format, default: 21 for 9 PM)
-        
-    Returns:
-        Dictionary containing automation setup status
+        username: Twitter username to monitor
+        reminder_time: Time to check in HH:MM format (e.g., "18:00")  
+        min_posts: Minimum posts required (default: 1)
+        custom_message: Optional custom reminder message
     """
     try:
-        # Note: This is a placeholder for automation setup
-        # In a real deployment, you'd set up a cron job or scheduler
-        
-        return {
-            "success": True,
-            "message": f"Automation configured for @{username} at {time_hour}:00",
-            "setup": {
-                "username": username,
-                "daily_time": f"{time_hour}:00",
-                "timezone": "Server timezone",
-                "note": "Automation requires deployment with scheduler (cron job or similar)"
-            },
-            "next_steps": [
-                "Deploy server to production",
-                "Set TWITTER_BEARER_TOKEN environment variable",
-                "Configure cron job for daily execution",
-                f"Schedule: 0 {time_hour} * * * python -c \"from twitter_metrics import *; from python_example import *; send_daily_twitter_report('{username}', PokeAPI(os.getenv('POKE_API_KEY')))\""
-            ],
-            "timestamp": datetime.now().isoformat()
-        }
+        poke_client = get_poke_client()
+        if not poke_client:
+            return {"error": "POKE_API_KEY not configured"}
+            
+        reminder = PostingReminder(poke_client)
+        return reminder.setup_daily_reminder(username, reminder_time, min_posts, custom_message)
         
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": "Failed to set up Twitter automation",
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"error": f"Failed to setup posting reminder: {str(e)}"}
+
+@mcp.tool(description="Check posting reminders and send alerts if needed - typically called by scheduled job")
+def check_posting_reminders() -> dict:
+    """Check all configured reminders and send alerts if needed"""
+    try:
+        bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
+        if not bearer_token:
+            return {"error": "TWITTER_BEARER_TOKEN not configured"}
+            
+        poke_client = get_poke_client()
+        if not poke_client:
+            return {"error": "POKE_API_KEY not configured"}
+            
+        counter = TwitterCounter(bearer_token)
+        reminder = PostingReminder(poke_client)
+        
+        return reminder.check_and_send_reminders(counter)
+        
+    except Exception as e:
+        return {"error": f"Failed to check reminders: {str(e)}"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     host = "0.0.0.0"
     
-    print("🚀 Starting Twitter MCP Server with Poke Integration")
-    print("🐦 Twitter metrics tools loaded")
+    print("🚀 Starting Twitter Tweet Counter MCP Server with Poke Integration")
+    print("📊 Tweet counting tools loaded (using /2/tweets/counts/recent)")
+    print("⏰ Posting reminder system loaded")
     print("📤 Poke messaging integration loaded")
     print("📡 Server will be available at /mcp endpoint")
     
