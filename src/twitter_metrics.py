@@ -81,8 +81,8 @@ class TwitterMetrics:
                 id=user_id,
                 max_results=min(max_results, 5),  # FREE TIER: Minimum allowed by X API is 5
                 tweet_fields=['public_metrics', 'created_at'],  # Removed context_annotations to reduce data
-                start_time=start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                end_time=end_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                start_time=start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                end_time=end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             )
             
             if not tweets.data:
@@ -158,32 +158,32 @@ def get_usage_recommendations() -> str:
     return """
 📊 2025 X API FREE TIER USAGE RECOMMENDATIONS:
 
-⚠️  DAILY REPORTS LIMITATIONS:
+✅ DAILY REPORTS ARE SUSTAINABLE:
 • 100 API calls per month total
 • Each daily report = 2 API calls (user lookup + tweets)
-• Maximum 50 reports per month
-• TRUE daily (30 reports) = 60 API calls, leaving only 40 for other usage
+• TRUE daily (30 reports) = 60 API calls
+• REMAINING 40 calls = plenty for errors, testing, other usage
 
-🎯 RECOMMENDED USAGE PATTERNS:
+🎯 USAGE PATTERNS (ALL VIABLE):
 
-1️⃣ WEEKLY REPORTS (Sustainable):
+1️⃣ DAILY REPORTS (Sustainable ✅):
+   • 30 reports per month = 60 API calls
+   • 40 calls remaining for other usage
+   • Perfect for daily monitoring
+
+2️⃣ WEEKLY REPORTS (Conservative):
    • 4 reports per month = 8 API calls
-   • Plenty of buffer for other usage
-   • Run every Sunday for weekly summary
+   • 92 calls remaining for heavy other usage
+   • Good if you have many other tools
 
-2️⃣ BI-WEEKLY REPORTS (Moderate):
-   • 2 reports per month = 4 API calls  
-   • Very conservative usage
-   • Good for occasional monitoring
+3️⃣ BI-WEEKLY/MONTHLY (Ultra-conservative):
+   • 2-4 reports per month = 4-8 API calls
+   • Maximum quota preservation
 
-3️⃣ MONTHLY REPORTS (Ultra-conservative):
-   • 1 report per month = 2 API calls
-   • Maximum API quota preservation
-
-❌ NOT RECOMMENDED:
-   • True daily automation (30+ reports/month)
-   • Multiple users without caching
-   • Testing without API call tracking
+🚀 OPTIMIZATION WITH CACHING:
+   • First month: 60 calls for 30 daily reports
+   • Subsequent months: ~30-35 calls (cached user IDs!)
+   • Even MORE sustainable long-term
 
 💡 OPTIMIZATION TIPS:
    • User IDs are cached after first lookup
