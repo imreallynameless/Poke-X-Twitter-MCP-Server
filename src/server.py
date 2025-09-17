@@ -17,6 +17,8 @@ from python_example import PokeAPI
 from twitter_metrics import TwitterCounter, PostingReminder, get_usage_info
 from fastmcp import FastMCP
 import logging
+from fastapi import Request
+from fastapi.responses import RedirectResponse
 
 # Set up detailed logging for debugging
 logging.basicConfig(level=logging.DEBUG)
@@ -24,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 # Initialize the MCP server
 mcp = FastMCP("Twitter MCP Server with Poke Integration")
+
+# Add redirect from root URL to GitHub repository
+@mcp.app.get("/")
+async def redirect_to_github():
+    """Redirect root URL to GitHub repository"""
+    return RedirectResponse(url="https://github.com/imreallynameless/Poke-X-Twitter-MCP-Server", status_code=302)
 
 # Note: FastMCP handles HTTP transport internally
 # The 406 error suggests the client is making GET requests when MCP expects POST
