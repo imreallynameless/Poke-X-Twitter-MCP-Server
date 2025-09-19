@@ -27,12 +27,6 @@ logger = logging.getLogger(__name__)
 # Initialize the MCP server
 mcp = FastMCP("Twitter MCP Server with Poke Integration")
 
-# Add redirect from root URL to GitHub repository
-@mcp.app.get("/")
-async def redirect_to_github():
-    """Redirect root URL to GitHub repository"""
-    return RedirectResponse(url="https://github.com/imreallynameless/Poke-X-Twitter-MCP-Server", status_code=302)
-
 # Note: FastMCP handles HTTP transport internally
 # The 406 error suggests the client is making GET requests when MCP expects POST
 
@@ -225,6 +219,17 @@ def check_posting_reminders() -> dict:
     except Exception as e:
         return {"error": f"Failed to check reminders: {str(e)}"}
 
+# Add HTTP routes after all tools are defined
+@mcp.app.get("/")
+async def redirect_to_github():
+    """Redirect root URL to GitHub repository"""
+    return RedirectResponse(url="https://github.com/imreallynameless/Poke-X-Twitter-MCP-Server", status_code=302)
+
+@mcp.app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "message": "Server is running", "timestamp": datetime.now().isoformat()}
+
 if __name__ == "__main__":
     # Render provides PORT environment variable
     port = int(os.environ.get("PORT", 8000))  # Use 8000 as default instead of environment
@@ -232,6 +237,12 @@ if __name__ == "__main__":
     
     # Set PORT for FastMCP to use (it may check this internally)
     os.environ["PORT"] = str(port)
+    
+    # Debug: Print registered routes
+    print("🔍 Registered routes:")
+    for route in mcp.app.routes:
+        print(f"   {route.methods} {route.path}")
+    print("")
     
     print(f"🔧 Environment PORT: {os.environ.get('PORT', 'not set, using 8000')}")
     print(f"🔧 Resolved port: {port}")
