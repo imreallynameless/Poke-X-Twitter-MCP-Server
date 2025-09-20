@@ -17,8 +17,9 @@ from python_example import PokeAPI
 from twitter_metrics import TwitterCounter, PostingReminder, get_usage_info
 from fastmcp import FastMCP
 import logging
-from fastapi import Request
-from fastapi.responses import RedirectResponse
+from starlette.requests import Request
+from starlette.responses import RedirectResponse, JSONResponse
+from starlette.routing import Route
 
 # Set up detailed logging for debugging
 logging.basicConfig(level=logging.DEBUG)
@@ -219,16 +220,10 @@ def check_posting_reminders() -> dict:
     except Exception as e:
         return {"error": f"Failed to check reminders: {str(e)}"}
 
-# Add HTTP routes after all tools are defined using FastMCP custom routes
-@mcp.custom_route(path="/", methods=["GET"])
-async def redirect_to_github():
+# Define custom route handlers
+async def redirect_to_github(request: Request):
     """Redirect root URL to GitHub repository"""
     return RedirectResponse(url="https://github.com/imreallynameless/Poke-X-Twitter-MCP-Server", status_code=302)
-
-@mcp.custom_route(path="/health", methods=["GET"])
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "ok", "message": "Server is running", "timestamp": datetime.now().isoformat()}
 
 if __name__ == "__main__":
     # Render provides PORT environment variable
@@ -292,10 +287,14 @@ if __name__ == "__main__":
     logger.info(f"Initializing FastMCP server with host={host}, port={port}")
     
     try:
+        # Add custom routes to the FastMCP HTTP app
+        app = mcp.http_app()
+        app.router.routes.insert(0, Route("/", endpoint=redirect_to_github, methods=["GET"]))
         
         # Force HTTP transport for web deployment (STDIO is for command-line)
         # Render needs HTTP transport, not STDIO
         logger.info("Forcing HTTP transport for web deployment")
+        logger.info(f"Added custom route: / (redirect to GitHub)")
         mcp.run(transport="http", host=host, port=port)
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
