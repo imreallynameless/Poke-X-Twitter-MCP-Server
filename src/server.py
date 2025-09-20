@@ -220,12 +220,15 @@ def check_posting_reminders() -> dict:
         return {"error": f"Failed to check reminders: {str(e)}"}
 
 # Add HTTP routes after all tools are defined
-@mcp.app.get("/")
+# Get the underlying FastAPI app from FastMCP
+app = mcp.http_app()
+
+@app.get("/")
 async def redirect_to_github():
     """Redirect root URL to GitHub repository"""
     return RedirectResponse(url="https://github.com/imreallynameless/Poke-X-Twitter-MCP-Server", status_code=302)
 
-@mcp.app.get("/health")
+@app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "message": "Server is running", "timestamp": datetime.now().isoformat()}
@@ -240,7 +243,7 @@ if __name__ == "__main__":
     
     # Debug: Print registered routes
     print("🔍 Registered routes:")
-    for route in mcp.app.routes:
+    for route in app.routes:
         print(f"   {route.methods} {route.path}")
     print("")
     
